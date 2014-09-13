@@ -7,11 +7,19 @@ function iutils_admin_structure_form($form, $form_state) {
 		'#submit' => array('iutils_admin_structure_form_download_db_backup'),
 		'#executes_submit_callback' => TRUE,
 	);
+
+	$form['download_public_files_backup'] = array(
+		'#type' => 'button',
+		'#value' => t('Download Public Files backup'),
+		'#submit' => array('iutils_admin_structure_form_download_public_files_backup'),
+		'#executes_submit_callback' => TRUE,
+	);
+
 	return ($form);
 }
 
+//Database backup
 function iutils_admin_structure_form_download_db_backup ($form, &$form_state) {
-	//http://davidwalsh.name/backup-mysql-database-php
 	global $databases;
 	
 	//10 minutes
@@ -50,6 +58,7 @@ function iutils_admin_structure_form_download_db_backup ($form, &$form_state) {
 }
 
 function _iutils_backup_tables($host, $name, $user, $pass, $tables = '*') {
+	//http://davidwalsh.name/backup-mysql-database-php
 	$link = mysqli_connect($host, $user, $pass, $name);
 	
 	//get all of the tables
@@ -154,4 +163,77 @@ function _iutils_gzCompressFile($source, $level = 9){
     } else {
         return $dest; 
 	}
+}
+
+
+
+//Public Files backup
+function iutils_admin_structure_form_download_public_files_backup ($form, &$form_state) {
+	//10 minutes
+	set_time_limit(600);
+	while(ob_get_level() > 0) {
+		ob_end_clean ();
+	}
+	
+	$publicFilesDir = variable_get('file_public_path', conf_path() . '/files');
+	
+	$temp_file = tempnam(sys_get_temp_dir(), 'tmp');	
+
+	$za = new FlxZipArchive;
+	$res = $za->open($temp_file, ZipArchive::CREATE);
+	if($res === TRUE) {
+		$za->addDir($publicFilesDir, basename($publicFilesDir));
+		$za->close();
+	} else{
+		echo 'Could not create a zip archive';
+	}
+
+	header("Pragma: public");
+	header("Expires: 0");
+	header("Cache-Control: must-revalidate, post-check=0, pre-check=0");
+	header("Cache-Control: private", false);
+	header("Content-Type: application/zip");
+	header("Content-Disposition: attachment; filename=" . basename($publicFilesDir) . ".zip;" );
+	header("Content-Transfer-Encoding: binary");
+	header("Content-Length: " . filesize($temp_file));
+	readfile($temp_file);
+
+	unlink($temp_file);
+	exit;
+}
+
+//http://stackoverflow.com/questions/17708562/zip-all-files-in-directory-and-download-zip-generated
+class FlxZipArchive extends ZipArchive {
+    /** Add a Dir with Files and Subdirs to the archive
+		@param string $location Real Location
+		@param string $name Name in Archive
+		@author Nicolas Heimann
+		@access private  
+	**/
+    public function addDir($location, $name) {
+        $this->addEmptyDir($name);
+
+        $this->addDirDo($location, $name);
+     }
+
+    /**  Add Files & Dirs to archive
+		@param string $location Real Location
+		@param string $name Name in Archive
+		@author Nicolas Heimann
+		@access private
+	**/
+    private function addDirDo($location, $name) {
+        $name .= '/';
+        $location .= '/';
+
+        // Read all Files in Dir
+        $dir = opendir ($location);
+        while ($file = readdir($dir)) {
+            if ($file == '.' || $file == '..') continue;
+			
+            // Recursive, If dir: FlxZipArchive::addDir(), else ::File();
+            $do = (filetype($location . $file) == 'dir') ? 'addDir' : 'addFile';
+            $this->$do($location . $file, $name . $file);
+        }
+    }
 }

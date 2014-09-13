@@ -10,7 +10,7 @@ function it_utils_menu() {
 	$items = array();
 
 	$items['admin/structure/it_utils'] = array(
-		'title' => t('it_utils'),
+		'title' => t('IT Utils'),
 		'description' => t('Imbibe Tech Utils for Drupal'),
 		'page callback' => 'drupal_get_form',
 		'page arguments' => array(

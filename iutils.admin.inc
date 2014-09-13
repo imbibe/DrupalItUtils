@@ -33,7 +33,7 @@ function iutils_admin_structure_form_download_db_backup ($form, &$form_state) {
 	$compressed_file = _iutils_gzCompressFile($temp_file);
 	unlink($temp_file);
 	
-	$attachment_name = $dbname . date("-Y-m-d H-i-s") . '.sql.gz';
+	$attachment_name = $dbname . date("-Y-m-d-H-i-s") . '.sql.gz';
 
 	header('Content-Description: File Transfer');
 	header('Content-Type: application/x-gzip');
@@ -50,16 +50,16 @@ function iutils_admin_structure_form_download_db_backup ($form, &$form_state) {
 }
 
 function _iutils_backup_tables($host, $name, $user, $pass, $tables = '*') {
-	$link = mysql_connect($host, $user, $pass);
-	mysql_select_db($name, $link);
+	$link = mysqli_connect($host, $user, $pass, $name);
 	
 	//get all of the tables
 	if($tables == '*') {
 		$tables = array();
-		$result = mysql_query('SHOW TABLES');
-		while($row = mysql_fetch_row($result)) {
+		$result = mysqli_query($link, 'SHOW TABLES');
+		while($row = mysqli_fetch_row($result)) {
 			$tables[] = $row[0];
 		}
+		mysqli_free_result($result);
 	} else {
 		$tables = is_array($tables) ? $tables : explode(',', $tables);
 	}
@@ -73,21 +73,21 @@ function _iutils_backup_tables($host, $name, $user, $pass, $tables = '*') {
 	foreach($tables as $table) {
 		_iutils_write_buffered($handle, $content, 'DROP TABLE ' . $table . ';');
 		
-		$result = mysql_query('SHOW CREATE TABLE ' . $table);
-		$row2 = mysql_fetch_row($result);
-		mysql_free_result($result);
+		$result = mysqli_query($link, 'SHOW CREATE TABLE ' . $table);
+		$row2 = mysqli_fetch_row($result);
+		mysqli_free_result($result);
 		
 		_iutils_write_buffered($handle, $content, "\n\n" . $row2[1] . ";\n\n");
 		
-		$result = mysql_query('SELECT * FROM ' . $table);
-		$num_fields = mysql_num_fields($result);
+		$result = mysqli_query($link, 'SELECT * FROM ' . $table);
+		$num_fields = mysqli_num_fields($result);
 		
 		for ($i = 0; $i < $num_fields; $i++) {
-			while($row = mysql_fetch_row($result)) {
+			while($row = mysqli_fetch_row($result)) {
 				_iutils_write_buffered($handle, $content, 'INSERT INTO '. $table .' VALUES(');
 				for($j=0; $j<$num_fields; $j++) {
 					$row[$j] = addslashes($row[$j]);
-					$row[$j] = ereg_replace("\n", "\\n", $row[$j]);
+					$row[$j] = preg_replace("/\n/", "\\n", $row[$j]);
 					if (isset($row[$j])) { _iutils_write_buffered($handle, $content, '"'.$row[$j].'"') ; } else { _iutils_write_buffered($handle, $content, '""'); }
 					if ($j < ($num_fields-1)) { _iutils_write_buffered($handle, $content, ','); }
 				}
@@ -98,18 +98,22 @@ function _iutils_backup_tables($host, $name, $user, $pass, $tables = '*') {
 		
 		_iutils_write_buffered($handle, $content, "\n\n\n");
 		
-		mysql_free_result($result);
+		mysqli_free_result($result);
 	}
 		
+	mysqli_close($link);
+	
+	_iutils_write_buffered($handle, $content, "", TRUE);
+	
 	fclose($handle);
 	
 	return ($temp_file);
 }
 
-function _iutils_write_buffered($handle, &$existing, $new) {
+function _iutils_write_buffered($handle, &$existing, $new = "", $force = FALSE) {
 	$existing .= $new;
 	
-	if(strlen($existing) > 128 *1024) {
+	if((strlen($existing) > 128 *1024) || $force) {
 		fwrite($handle, $existing);
 		$existing = "";
 	}

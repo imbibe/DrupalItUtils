@@ -1,17 +1,17 @@
 <?php
 
-function iutils_admin_structure_form($form, $form_state) {
+function it_utils_admin_structure_form($form, $form_state) {
 	$form['download_db_backup'] = array(
 		'#type' => 'button',
 		'#value' => t('Download DB backup'),
-		'#submit' => array('iutils_admin_structure_form_download_db_backup'),
+		'#submit' => array('it_utils_admin_structure_form_download_db_backup'),
 		'#executes_submit_callback' => TRUE,
 	);
 
 	$form['download_public_files_backup'] = array(
 		'#type' => 'button',
 		'#value' => t('Download Public Files backup'),
-		'#submit' => array('iutils_admin_structure_form_download_public_files_backup'),
+		'#submit' => array('it_utils_admin_structure_form_download_public_files_backup'),
 		'#executes_submit_callback' => TRUE,
 	);
 
@@ -19,7 +19,7 @@ function iutils_admin_structure_form($form, $form_state) {
 }
 
 //Database backup
-function iutils_admin_structure_form_download_db_backup ($form, &$form_state) {
+function it_utils_admin_structure_form_download_db_backup ($form, &$form_state) {
 	global $databases;
 	
 	//10 minutes
@@ -36,9 +36,9 @@ function iutils_admin_structure_form_download_db_backup ($form, &$form_state) {
 	/*$temp_file = tempnam(sys_get_temp_dir(), 'tmp');
 	$command = "mysqldump -h $dbhost -u $dbuser -p$dbpass $dbname > $temp_file";
 	system($command);*/
-	$temp_file = _iutils_backup_tables($dbhost, $dbname, $dbuser, $dbpass);
+	$temp_file = _it_utils_backup_tables($dbhost, $dbname, $dbuser, $dbpass);
 
-	$compressed_file = _iutils_gzCompressFile($temp_file);
+	$compressed_file = _it_utils_gzCompressFile($temp_file);
 	unlink($temp_file);
 	
 	$attachment_name = $dbname . date("-Y-m-d-H-i-s") . '.sql.gz';
@@ -57,7 +57,7 @@ function iutils_admin_structure_form_download_db_backup ($form, &$form_state) {
 	exit;
 }
 
-function _iutils_backup_tables($host, $name, $user, $pass, $tables = '*') {
+function _it_utils_backup_tables($host, $name, $user, $pass, $tables = '*') {
 	//http://davidwalsh.name/backup-mysql-database-php
 	$link = mysqli_connect($host, $user, $pass, $name);
 	
@@ -80,46 +80,46 @@ function _iutils_backup_tables($host, $name, $user, $pass, $tables = '*') {
 
 	//cycle through
 	foreach($tables as $table) {
-		_iutils_write_buffered($handle, $content, 'DROP TABLE ' . $table . ';');
+		_it_utils_write_buffered($handle, $content, 'DROP TABLE ' . $table . ';');
 		
 		$result = mysqli_query($link, 'SHOW CREATE TABLE ' . $table);
 		$row2 = mysqli_fetch_row($result);
 		mysqli_free_result($result);
 		
-		_iutils_write_buffered($handle, $content, "\n\n" . $row2[1] . ";\n\n");
+		_it_utils_write_buffered($handle, $content, "\n\n" . $row2[1] . ";\n\n");
 		
 		$result = mysqli_query($link, 'SELECT * FROM ' . $table);
 		$num_fields = mysqli_num_fields($result);
 		
 		for ($i = 0; $i < $num_fields; $i++) {
 			while($row = mysqli_fetch_row($result)) {
-				_iutils_write_buffered($handle, $content, 'INSERT INTO '. $table .' VALUES(');
+				_it_utils_write_buffered($handle, $content, 'INSERT INTO '. $table .' VALUES(');
 				for($j=0; $j<$num_fields; $j++) {
 					$row[$j] = addslashes($row[$j]);
 					$row[$j] = preg_replace("/\n/", "\\n", $row[$j]);
-					if (isset($row[$j])) { _iutils_write_buffered($handle, $content, '"'.$row[$j].'"') ; } else { _iutils_write_buffered($handle, $content, '""'); }
-					if ($j < ($num_fields-1)) { _iutils_write_buffered($handle, $content, ','); }
+					if (isset($row[$j])) { _it_utils_write_buffered($handle, $content, '"'.$row[$j].'"') ; } else { _it_utils_write_buffered($handle, $content, '""'); }
+					if ($j < ($num_fields-1)) { _it_utils_write_buffered($handle, $content, ','); }
 				}
 				
-				_iutils_write_buffered($handle, $content, ");\n");
+				_it_utils_write_buffered($handle, $content, ");\n");
 			}
 		}
 		
-		_iutils_write_buffered($handle, $content, "\n\n\n");
+		_it_utils_write_buffered($handle, $content, "\n\n\n");
 		
 		mysqli_free_result($result);
 	}
 		
 	mysqli_close($link);
 	
-	_iutils_write_buffered($handle, $content, "", TRUE);
+	_it_utils_write_buffered($handle, $content, "", TRUE);
 	
 	fclose($handle);
 	
 	return ($temp_file);
 }
 
-function _iutils_write_buffered($handle, &$existing, $new = "", $force = FALSE) {
+function _it_utils_write_buffered($handle, &$existing, $new = "", $force = FALSE) {
 	$existing .= $new;
 	
 	if((strlen($existing) > 128 *1024) || $force) {
@@ -139,7 +139,7 @@ function _iutils_write_buffered($handle, &$existing, $new = "", $force = FALSE) 
  * @param integer $level GZIP compression level (default: 9)
  * @return string New filename (with .gz appended) if success, or false if operation fails
  */
-function _iutils_gzCompressFile($source, $level = 9){ 
+function _it_utils_gzCompressFile($source, $level = 9){ 
     $dest = $source . '.gz'; 
     $mode = 'wb' . $level;
 	
@@ -168,7 +168,7 @@ function _iutils_gzCompressFile($source, $level = 9){
 
 
 //Public Files backup
-function iutils_admin_structure_form_download_public_files_backup ($form, &$form_state) {
+function it_utils_admin_structure_form_download_public_files_backup ($form, &$form_state) {
 	//10 minutes
 	set_time_limit(600);
 	while(ob_get_level() > 0) {

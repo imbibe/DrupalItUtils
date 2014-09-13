@@ -1,0 +1,24 @@
+<?php
+
+function _iutils_debug_print($obj) {
+	print '<pre>';
+	print_r($obj);
+	print '</pre>';
+}
+
+function iutils_menu() {
+	$items = array();
+
+	$items['admin/structure/iutils'] = array(
+		'title' => t('iUtils'),
+		'description' => t('Imbibe Tech Utils for Drupal'),
+		'page callback' => 'drupal_get_form',
+		'page arguments' => array(
+				'iutils_admin_structure_form',
+			NULL),
+		'access arguments' => array('administer modules'),
+		'file' => 'iutils.admin.inc',
+	);
+
+	return $items;
+}

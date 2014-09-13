@@ -1,0 +1,6 @@
+name = Drupal Utils
+package = Imbibe Tech
+description = Imbibe Tech Utils for Drupal.
+
+version = "7.x-1.0"
+core = 7.x

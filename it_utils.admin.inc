@@ -15,6 +15,12 @@ function it_utils_admin_structure_form($form, $form_state) {
 		'#executes_submit_callback' => TRUE,
 	);
 
+	$form['download_full_filesystem_backup'] = array(
+		'#type' => 'button',
+		'#value' => t('Download Full File-system backup'),
+		'#submit' => array('it_utils_admin_structure_form_download_full_filesystem_backup'),
+		'#executes_submit_callback' => TRUE,
+	);
 	return ($form);
 }
 
@@ -57,10 +63,27 @@ function it_utils_admin_structure_form_download_public_files_backup ($form, &$fo
 	_it_utils_admin_init_long_running_request();
 	it_utils_disable_output_buffering();
 	
-	$publicFilesDir = it_utils_get_public_files_directory();	
-	$compressed_file = it_utils_filesystem_zip_directory($publicFilesDir);
+	$dir = it_utils_get_public_files_directory();	
+	$compressed_file = it_utils_filesystem_zip_directory($dir);
 
-	it_utils_send_attachment($compressed_file, basename($publicFilesDir) . '.zip', 'application/zip');
+	it_utils_send_attachment($compressed_file, basename($dir) . '.zip', 'application/zip');
+
+	unlink($compressed_file);
+	exit;
+}
+
+//Full File-system backup
+function it_utils_admin_structure_form_download_full_filesystem_backup ($form, &$form_state) {
+	module_load_include('inc', 'it_utils', 'inc/it_utils');
+	module_load_include('inc', 'it_utils', 'inc/it_utils_filesystem');
+
+	_it_utils_admin_init_long_running_request();
+	it_utils_disable_output_buffering();
+	
+	$dir = DRUPAL_ROOT;
+	$compressed_file = it_utils_filesystem_zip_directory($dir);
+
+	it_utils_send_attachment($compressed_file, basename($dir) . '.zip', 'application/zip');
 
 	unlink($compressed_file);
 	exit;

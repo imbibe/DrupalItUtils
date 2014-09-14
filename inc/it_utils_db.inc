@@ -1,4 +1,12 @@
 <?php
+// 
+// Imbibe Technologies Pvt Ltd® - http://imbibe.in
+// Copyright (c) 2014
+// by Imbibe Technologies Pvt Ltd
+// 
+// This software and associated files including documentation (the "Software") is goverened by Microsoft Public License (MS-PL),
+// a copy of which is included with the Software as a text file, License.txt.
+
 function it_utils_db_backup_tables($host, $name, $user, $pass, $tables = '*') {
 	//http://davidwalsh.name/backup-mysql-database-php
 	$link = mysqli_connect($host, $user, $pass, $name);

@@ -1,4 +1,11 @@
 <?php
+// 
+// Imbibe Technologies Pvt Ltd® - http://imbibe.in
+// Copyright (c) 2014
+// by Imbibe Technologies Pvt Ltd
+// 
+// This software and associated files including documentation (the "Software") is goverened by Microsoft Public License (MS-PL),
+// a copy of which is included with the Software as a text file, License.txt.
 
 function it_utils_admin_structure_form($form, $form_state) {
 	$form['download_db_backup'] = array(

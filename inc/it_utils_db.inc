@@ -30,7 +30,7 @@ function it_utils_db_backup_tables($host, $name, $user, $pass, $tables = '*') {
 
 	//cycle through
 	foreach($tables as $table) {
-		_it_utils_db_write_buffered($handle, $content, 'DROP TABLE ' . $table . ';');
+		_it_utils_db_write_buffered($handle, $content, 'DROP TABLE IF EXISTS ' . $table . ';');
 		
 		$result = mysqli_query($link, 'SHOW CREATE TABLE ' . $table);
 		$row2 = mysqli_fetch_row($result);
